@@ -2,7 +2,7 @@
 
 **BOAP** is a Nextflow-based automated pipeline for the assembly, polishing, and quality control of bacterial genomes using Oxford Nanopore Technologies (ONT) Whole Genome Sequencing data.
 
-BOAP takes raw reads (FASTQ or BAM) and produces high-quality, circularized, and polished assemblies with detailed QC reports.
+BOAP takes raw reads (FASTQ or BAM) and produces high-quality, circularized, and polished assemblies with reports on assembly completeness and accuracy.
 
 
 ## Pipeline overview
