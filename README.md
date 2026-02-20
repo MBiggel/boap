@@ -29,7 +29,7 @@ BOAP takes raw reads (FASTQ or BAM) and produces high-quality, circularized, and
 Following commands will install python, nanoq, raven-assembler, filtlong, flye, dnaapler, medaka, seqkit, samtools, and scipy into a dedicated boap conda environment:
 
 ```bash
-git clone https://github.com/yourusername/boap.git
+git clone https://github.com/MBiggel/boap.git
 cd boap
 conda env create -f environment.yml
 ```
@@ -99,7 +99,7 @@ results/
         └── ...
 ```
 
-The alpaqa report provides detailed information on assembly accuracy. See the GitHub [link] repository for more details.
+The alpaqa report provides detailed information on assembly accuracy. See the [alpaqa](https://github.com/MBiggel/alpaqa) for more details.
 
 ## References
 **Seqkit**: https://github.com/shenwei356/seqkit
