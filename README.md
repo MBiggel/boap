@@ -32,6 +32,7 @@ Following commands will install python, nanoq, raven-assembler, filtlong, flye, 
 git clone https://github.com/MBiggel/boap.git
 cd boap
 conda env create -f environment.yml
+conda env list
 ```
 
 ### Configuration
