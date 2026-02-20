@@ -10,7 +10,7 @@ def version = "1.0.0"
 
 // Display version and exit if --version is called
 if (workflow.commandLine.contains('--version')) {
-    println "BAOP Version: $version"
+    println "BOAP Version: $version"
     exit 0
 }
 
@@ -18,7 +18,7 @@ if (workflow.commandLine.contains('--version')) {
 params.input          = "input_fastq"
 params.reads          = "${params.input}/*.fastq.gz" 
 params.threads        = 30
-params.outdir         = "baop_output"
+params.outdir         = "boap_output"
 params.coverage       = 100
 params.min_contig_len = 1000
 params.gsize          = null
@@ -157,7 +157,7 @@ process DNAAPLER {
     """
 }
 
-process MEDAKA2_POLISH {
+process MEDAKA2 {
     tag "$sampleid"
 
     cpus 4
@@ -234,15 +234,10 @@ process ALPAQA {
 // --- 4. WORFLOW ---
 
 workflow {
-    def input_path = file(params.input)
-    
-    if (input_path.isFile()) {
-        raw_ch = Channel.fromPath(input_path)
-                        .map { file -> tuple(file.simpleName, file) }
-    } else {
-        raw_ch = Channel.fromPath( "${params.input}/*.{fastq.gz,bam}" )
-                        .map { file -> tuple(file.simpleName, file) }
-    }
+    raw_ch = Channel.fromPath(params.input)
+        .map { it -> it.isDirectory() ? file("${it}/*.{fastq.gz,bam}") : it }
+        .flatten()
+        .map { file -> tuple(file.simpleName, file) }
 
     raw_ch.branch {
         bam:   it[1].name.endsWith('.bam')
@@ -267,8 +262,8 @@ workflow {
     FILTLONG(filtlong_input)
     FLYE(FILTLONG.out.reads)
     DNAAPLER(FLYE.out.assembly)
-    MEDAKA2_POLISH(DNAAPLER.out.assembly_reo)
-    ALPAQA(MEDAKA2_POLISH.out.polished)
+    MEDAKA2(DNAAPLER.out.assembly_reo)
+    ALPAQA(MEDAKA2.out.polished)
     ALPAQA.out.stats.collectFile(name: 'alpaqa_report.tsv', storeDir: "${params.outdir}/summary", keepHeader: true, skip: 1)
     ALPAQA.out.info.collectFile(name: 'contig_report.tsv', storeDir: "${params.outdir}/summary", keepHeader: true, skip: 1)
 }
