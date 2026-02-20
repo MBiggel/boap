@@ -14,7 +14,7 @@ BOAP takes raw reads (FASTQ or BAM) and produces high-quality, circularized, and
 4.  **Downsampling (Filtlong)**: Downsamples high-quality data to a target coverage (default 100x).
 5.  **Assembly (Flye)**: Performs *de novo* assembly using Flye with the `--nano-hq` mode.
 6.  **Circularization (Dnaapler)**: Re-orients circular chromosomes and plasmids to standardized start positions.
-7.  **Polishing (Dorado)**: Polishes the assembly using ONT's `dorado` with the `--bacteria` model for high consensus accuracy.
+7.  **Polishing (Medaka2)**: Polishes the assembly using ONT's `medaka` with the `--bacteria` model for high consensus accuracy.
 8.  **QC & Reporting**: Calculates accuracy via `Alpaqa` and summarizes contig lengths and coverage information.
 
 
@@ -77,10 +77,8 @@ nextflow run /path/to/boap.nf -c /path/to/nextflow.config --input "*.bam" --forc
 | `--min_contig_len` | `1000`        | Minimum contig length (Flye)                                                                                                                                                                                                                                                                    |
 | `--gsize`          | `null`        | Manual genome size (e.g., `5m`). If not set, calculated automatically via Raven                                                                                                                                                                                                                 |
 | `--threads`        | `30`          | Maximum number of threads used for parallel processes                                                                                                                                                                                                                                           |
-| `--force_model`    | `false`       | (Optional) Force a specific Dorado basecalling model for polishing (e.g., `dna_r10.4.1_e8.2_400bps_sup@v5.0.0`). The pipeline automatically detects the basecalling model from the input FASTQ/BAM headers. This parameter should only be used if the model information is missing in the input |
-| `--conda_env`      | `see script`  | Absolute path to the conda environment binary                                                                                                                                                                                                                                                   |
-| `--dorado_path`    | `see script`  | Absolute path to the Dorado binary                                                                                                                                                                                                                                                              |
-| `--alpaqa_script`  | `see script`  | Absolute path to alpaqa.py                                                                                                                                                                                                                                                                      |
+| `--force_model`    | `false`       | (Optional) Force a specific basecalling model for polishing (e.g., `dna_r10.4.1_e8.2_400bps_sup@v5.0.0`). The pipeline automatically detects the basecalling model from the input FASTQ/BAM headers. This parameter should only be used if the model information is missing in the input |
+ 
 
 
 
