@@ -11,12 +11,13 @@ BOAP takes raw reads (FASTQ or BAM) and produces high-quality, circularized, and
    Inclusion of the basecalling model in the read header is recommended. BAM files are automatically converted to FASTQ.
 2.  **Quality Filtering (Nanoq)**: Filters reads based on minimum quality (Q10) and minimum length (1,000 bp).
 3.  **Genome Size Estimation**: Uses `Raven` to estimate genome size from a rapid preliminary assembly. Alternatively accepts  user-provided size (e.g., `5m`) to skip raven assembly.
-4.  **Downsampling (Filtlong)**: Downsamples high-quality data to a target coverage (default 100x).
+4.  **Downsampling (Filtlong)**: Downsamples high-quality reads to a target coverage (default 100x) based on mean quality (without additional length filtering).
 5.  **Assembly (Flye)**: Performs *de novo* assembly using Flye with the `--nano-hq` mode.
 6.  **Circularization (Dnaapler)**: Re-orients circular chromosomes and plasmids to standardized start positions.
 7.  **Polishing (Medaka2)**: Polishes the assembly using ONT's `medaka` with the `--bacteria` model for high consensus accuracy.
 8.  **QC & Reporting**: Calculates accuracy via `Alpaqa` and summarizes contig lengths and coverage information.
 
+To evaluate the impact of sequencing depth on assembly quality, reads should be randomly downsampled to the desired coverage using Rasusa before running the pipeline to ensure unbiased read selection.
 
 
 ## Installation & Configuration
