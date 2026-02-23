@@ -99,7 +99,7 @@ results/
         └── ...
 ```
 
-The alpaqa report provides detailed information on assembly accuracy. See the [alpaqa](https://github.com/MBiggel/alpaqa) for more details.
+The alpaqa report provides information on assembly accuracy and potential systematic errors. See the [alpaqa](https://github.com/MBiggel/alpaqa) for more details.
 
 ## References
 **Seqkit**: https://github.com/shenwei356/seqkit
