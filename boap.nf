@@ -59,11 +59,14 @@ process NANOQ {
     cpus 1
     
     input:  tuple val(sampleid), path(reads)
-    output: tuple val(sampleid), path("${sampleid}_q10.fastq.gz"), emit: filtered_reads 
+    output: tuple val(sampleid), path("${sampleid}_q10.fastq.gz"), emit: filtered_reads
+            path("${sampleid}_nanoq_report.tsv"), emit: report
 
     script:
     """
-    nanoq --input ${reads} --min-len ${params.min_contig_len} --min-qual 10 --output-type g -o ${sampleid}_q10.fastq.gz
+    nanoq --input ${reads} --min-len ${params.min_contig_len} --min-qual 10 --output-type g -r nanoq_report.txt -H -o ${sampleid}_q10.fastq.gz
+
+    awk -v id="${sampleid}" -v OFS='\\t' '{\$1=\$1} NR==1 {print "sample_id", \$0} NR>1 {print id, \$0}' nanoq_report.txt > ${sampleid}_nanoq_report.tsv
     """
 }
 
@@ -266,4 +269,5 @@ workflow {
     ALPAQA(MEDAKA2.out.polished)
     ALPAQA.out.stats.collectFile(name: 'alpaqa_report.tsv', storeDir: "${params.outdir}/summary", keepHeader: true, skip: 1)
     ALPAQA.out.info.collectFile(name: 'contig_report.tsv', storeDir: "${params.outdir}/summary", keepHeader: true, skip: 1)
+    NANOQ.out.report.collectFile(name: 'nanoq_filtered_report.tsv', storeDir: "${params.outdir}/summary", keepHeader: true, skip: 1)
 }

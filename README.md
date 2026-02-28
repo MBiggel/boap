@@ -56,9 +56,9 @@ nextflow run /path/to/boap.nf -c /path/to/nextflow.config --input /path/to/reads
 ```
 
 #### Run the pipeline on a single input file
-Target coverage 80x. Provide the genome size to skip the estimation step. Use --cleanup to automatically delete the work directory after a successful run to save disk space. Include -bg to run the pipeline in the background.
+Target coverage 80x. Provide the genome size to skip the estimation step. Include -bg to run the pipeline in the background.
 ```
-nextflow run /path/to/boap.nf -c /path/to/nextflow.config --input "/path/to/reads/sample_01.fastq.gz" --gsize 5.2m --coverage 80 --threads 30 --outdir boap_results --cleanup -bg
+nextflow run /path/to/boap.nf -c /path/to/nextflow.config --input "/path/to/reads/sample_01.fastq.gz" --gsize 5.2m --coverage 80 --threads 30 --outdir boap_results -bg
 ```
 
 #### Force a specific medaka2 model
