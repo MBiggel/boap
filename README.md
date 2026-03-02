@@ -2,7 +2,7 @@
 
 **BOAP** is a Nextflow-based automated pipeline for the assembly, polishing, and quality control of bacterial genomes using Oxford Nanopore Technologies (ONT) Whole Genome Sequencing data.
 
-BOAP takes raw reads (FASTQ or BAM) and produces high-quality, circularized, and polished assemblies with reports on assembly completeness and accuracy.
+BOAP takes raw reads (FASTQ or BAM) and produces high-quality, circularized, and polished assemblies with reports on assembly completeness and accuracy. For assemblies identified as error-prone, BAOP automatically provides additional assembly files with masked low-quality bases (LQBs) for improved accuracy in cgMLST analyses.
 
 
 ## Pipeline overview
@@ -16,9 +16,7 @@ BOAP takes raw reads (FASTQ or BAM) and produces high-quality, circularized, and
 6.  **Circularization (Dnaapler)**: Re-orients circular chromosomes and plasmids to standardized start positions.
 7.  **Polishing (Medaka2)**: Polishes the assembly using ONT's `medaka` with the `--bacteria` model for high consensus accuracy.
 8.  **QC & Reporting**: Calculates accuracy via `Alpaqa` and summarizes contig lengths and coverage information.
-
-To evaluate the impact of sequencing depth on assembly quality, reads should be randomly downsampled to the desired coverage using Rasusa before running the pipeline to ensure unbiased read selection.
-
+9. **Conditional Masking**: For assemblies flagged as error-prone by `Alpaqa` (default threshold ≥5 LQB/Mbp), low-quality bases (default Q≤10) are masked with 'N' to improve downstream cgMLST analyses. These masked assemblies are saved as additional outputs alongside the polished genomes.
 
 ## Installation & Configuration
 
@@ -40,9 +38,13 @@ conda env list
 
 Important: Before running, update the path to your conda environment in the nextflow.config file, for example
 
-    process.conda = '/home/user/miniconda3/envs/boap'
-		
-	
+```bash
+# list path to BOAP environment
+conda env list | grep "boap"
+
+# modify the nextflow.config file
+process.conda = '/path/to/conda/envs/boap'
+```
 
 ##  Usage
 
@@ -67,18 +69,26 @@ Information on the basecalling model is usually stored in the fastq or bam files
 nextflow run /path/to/boap.nf -c /path/to/nextflow.config --input "*.bam" --force-model dna_r10.4.1_e8.2_400bps_sup@v5.2.0
 ```
   
-  
+#### Modify LQB masking parameters
+Mask bases with qscores ≤8 (default 10) in assemblies with ≥3 LQBs/Mpb (default: 5). 
+```
+nextflow run /path/to/boap.nf -c /path/to/nextflow.config --input /path/to/reads/ --threads 30 --mask_threshold 8 --min_lqb_mb 3 
+```
+
+
 ## Parameters
 
-| Parameter          | Default       | Description                                                                                                                                                                                                                                                                                     |
+| Parameter| Default| Description|
 | ------------------ | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--input`          | `input_fastq` | Directory containing `.fastq.gz` / `.bam` files or path to a single file                                                                                                                                                                                                                        |
-| `--outdir`         | `boap_output` | Output directory for results                                                                                                                                                                                                                                                                    |
-| `--coverage`       | `100`         | Target coverage for downsampling (Filtlong)                                                                                                                                                                                                                                                     |
-| `--min_contig_len` | `1000`        | Minimum contig length (Flye)                                                                                                                                                                                                                                                                    |
-| `--gsize`          | `null`        | Manual genome size (e.g., `5m`). If not set, calculated automatically via Raven                                                                                                                                                                                                                 |
-| `--threads`        | `30`          | Maximum number of threads used for parallel processes                                                                                                                                                                                                                                           |
-| `--force_model`    | `false`       | (Optional) Force a specific basecalling model for polishing (e.g., `dna_r10.4.1_e8.2_400bps_sup@v5.0.0`). The pipeline automatically detects the basecalling model from the input FASTQ/BAM headers. This parameter should only be used if the model information is missing in the input |
+| `--input`| `input_fastq`| Directory containing `.fastq.gz` / `.bam` files or path to a single file|
+| `--outdir`| `boap_output`| Output directory for results|
+| `--coverage`| `100`| Target coverage for downsampling (Filtlong)|
+| `--min_contig_len` | `1000`| Minimum contig length (Flye)|
+| `--gsize`| `null`| Manual genome size (e.g., `5m`). If not set, calculated automatically via Raven|
+| `--threads`|`30`| Maximum number of threads used for parallel processes|
+| `--force_model`| `false`| (Optional) Force a specific basecalling model for polishing (e.g., `dna_r10.4.1_e8.2_400bps_sup@v5.0.0`). The pipeline automatically detects the basecalling model from the input FASTQ/BAM headers. This parameter should only be used if the model information is missing in the input |
+| `--min_lqb_mb`| `5`|Alpaqa threshold (LQB/Mb) to trigger conditional masking of low-quality bases.|
+| `--mask_threshold`|`10`|Quality score cutoff for masking. If masking is triggered, bases with a Q-score ≤ this value are replaced with 'N'.|
  
 
 
@@ -86,12 +96,16 @@ nextflow run /path/to/boap.nf -c /path/to/nextflow.config --input "*.bam" --forc
 ## Output Structure
 ```
 results/
-├── assembly/                   # Final polished assemblies
+├── assemblies/                   # Medaka2 polished assemblies
 │   ├── sampleA.fasta
 │   └── sampleB.fasta
+├── assemblies_LQB-masked/        # Assemblies flagged as error-prone by alpaqa with masked LQBs as input for cgMLST analyes
+│   ├── sampleA_q[x]_masked.fasta
+│   └── sampleB_q[x]_masked.fasta
 ├── summary/                    # QC reports
 │   ├── alpaqa_report.tsv       # Statistics on assembly accuracy
-│   └── contig_report.tsv       # Contig info (length, coverage, circularity)
+│   ├── contig_report.tsv       # Contig info (length, coverage, circularity)
+│   └── nanoq_filtered_report.tsv  # Nanoq report after read filtering
 └── flye/                       # Intermediate Flye output (assembly graph/logs)
     └── sampleA/
         ├── assembly_graph.gfa
@@ -100,6 +114,9 @@ results/
 ```
 
 The alpaqa report provides information on assembly accuracy and potential systematic errors. See the [alpaqa](https://github.com/MBiggel/alpaqa) for more details.
+
+## Downstream cgMLST analyses of LQB-masked assemblies
+For assemblies flagged as error-prone, the masked output files minimize false-positive allele calls in cgMLST tools (e.g. Ridom SeqSphere+) that interpret masked ("N") bases as missing. While this improves accuracy, the percentage of good targets (or total number of called loci) must be taken into account when interpreting cluster analyses.
 
 ## References
 **Seqkit**: https://github.com/shenwei356/seqkit

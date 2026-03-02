@@ -22,7 +22,9 @@ params.outdir         = "boap_output"
 params.coverage       = 100
 params.min_contig_len = 1000
 params.gsize          = null
-params.force_model    = false 
+params.force_model    = false
+params.min_lqb_mb     = 5
+params.mask_threshold = 10
 
 // --- 2. GSIZE PARSING ---
 def manual_gsize_val = null
@@ -168,10 +170,10 @@ process MEDAKA2 {
     // define the model flag conditionally based on params.force_model
     def model_flag = params.force_model ? "-m ${params.force_model}" : ""
 
-    publishDir "${params.outdir}/assembly", mode: "copy", pattern: "*.fasta"
+    publishDir "${params.outdir}/assemblies", mode: "copy", pattern: "*.fasta"
 
     input:  tuple val(sampleid), path(assembly), path(reads)
-    output: tuple val(sampleid), path("${sampleid}_polished.fastq"), path("${sampleid}.fasta"), emit: polished
+    output: tuple val(sampleid), path("${sampleid}.fastq"), path("${sampleid}.fasta"), emit: polished
 
     script:
     
@@ -192,23 +194,43 @@ process MEDAKA2 {
 
     seqkit replace -p \\\$ -r " contig_{nr}" --nr-width 5 sorted_consensus.fastq \
         | seqkit replace -p ' (.+)\$' -r ' {kv}' -k merged_headers.txt --keep-key \
-        > ${sampleid}_polished.fastq
+        > ${sampleid}.fastq
 
-    seqkit fq2fa ${sampleid}_polished.fastq -o ${sampleid}.fasta
+    seqkit fq2fa ${sampleid}.fastq -o ${sampleid}.fasta
     """
 }
 
 process ALPAQA {
     tag "$sampleid"
+    publishDir "${params.outdir}/assemblies_LQB-masked", pattern: "*_q${params.mask_threshold}_masked.fasta", mode: 'copy'
     
     input:  tuple val(sampleid), path(fastq), path(fasta)
-    output: path "${sampleid}_alpaqa.tsv", emit: stats
-            path "${sampleid}_contig_info.txt", emit: info
-
+    
+    output: 
+    path "${sampleid}_alpaqa.tsv", emit: stats
+    path "${sampleid}_contig_info.txt", emit: info
+    path "${sampleid}_q${params.mask_threshold}_masked.fasta", emit: masked_assembly, optional: true
     script:
+    def lqb_limit = params.min_lqb_mb
+    def mask_q    = params.mask_threshold
     """
+    # 1. Run alpaqa
     alpaqa.py -i ${fastq} -o ${sampleid}_alpaqa.tsv -t 1
 
+    # 2. Check LQB/Mbp and conditionally run masking
+    lqb_val=\$(awk 'NR>1 {print \$4}' ${sampleid}_alpaqa.tsv)
+    
+    #    Use awk to compare floating point numbers (returns 1 for True, 0 for False)
+    do_mask=\$(awk -v val="\$lqb_val" -v limit="${lqb_limit}" 'BEGIN {print (val >= limit) ? 1 : 0}')
+    
+    if [ "\$do_mask" -eq 1 ]; then
+        echo "Sample ${sampleid}: LQB/Mbp (\$lqb_val) >= ${lqb_limit}. Masking with Q<${mask_q}..."
+        fastq2a.py -i ${fastq} -o ${sampleid}_q${mask_q}_masked.fasta -q ${mask_q}
+    else
+        echo "Sample ${sampleid}: LQB/Mbp (\$lqb_val) < ${lqb_limit}. No masking needed."
+    fi
+
+    # 3. Generate Contig Info
     awk -v sid="${sampleid}" '
     BEGIN { 
         OFS="\\t"; 
@@ -221,7 +243,6 @@ process ALPAQA {
         len = cov = circular = rotated = rotated_gene = "NA";
 
         for (i = 2; i <= NF; i++) {
-            # Note: orig_ tags are stripped in previous step, so we dont parse them here
             if (\$i ~ /^len=/) len = substr(\$i, 5);
             else if (\$i ~ /^cov=/) cov = substr(\$i, 5);
             else if (\$i ~ /^circular=/) circular = \$i;       
