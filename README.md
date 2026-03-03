@@ -105,7 +105,7 @@ results/
 ├── summary/                    # QC reports
 │   ├── alpaqa_report.tsv       # Statistics on assembly accuracy
 │   ├── contig_report.tsv       # Contig info (length, coverage, circularity)
-│   └── nanoq_filtered_report.tsv  # Nanoq report after read filtering
+│   └── nanoq_filtered_report.tsv  # Statistics on read data after initial read filtering with nanoq (before downsampling)
 └── flye/                       # Intermediate Flye output (assembly graph/logs)
     └── sampleA/
         ├── assembly_graph.gfa
