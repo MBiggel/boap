@@ -66,7 +66,7 @@ nextflow run /path/to/boap.nf -c /path/to/nextflow.config --input "/path/to/read
 #### Force a specific medaka2 model
 Information on the basecalling model is usually stored in the fastq or bam files and automatically detected by medaka2. If the model information is missing in the input files, specific models can be provided via
 ```
-nextflow run /path/to/boap.nf -c /path/to/nextflow.config --input "*.bam" --force-model dna_r10.4.1_e8.2_400bps_sup@v5.2.0
+nextflow run /path/to/boap.nf -c /path/to/nextflow.config --input "*.bam" --force-model r1041_e82_400bps_sup_v5.2.0
 ```
   
 #### Modify LQB masking parameters
@@ -86,7 +86,7 @@ nextflow run /path/to/boap.nf -c /path/to/nextflow.config --input /path/to/reads
 | `--min_contig_len` | `1000`| Minimum contig length (Flye)|
 | `--gsize`| `null`| Manual genome size (e.g., `5m`). If not set, calculated automatically via Raven|
 | `--threads`|`30`| Maximum number of threads used for parallel processes|
-| `--force_model`| `false`| (Optional) Force a specific basecalling model for polishing (e.g., `dna_r10.4.1_e8.2_400bps_sup@v5.0.0`). The pipeline automatically detects the basecalling model from the input FASTQ/BAM headers. This parameter should only be used if the model information is missing in the input |
+| `--force_model`| `false`| (Optional) Force a specific basecalling model for polishing (e.g., `r1041_e82_400bps_sup_v5.0.0`). The pipeline automatically detects the basecalling model from the input FASTQ/BAM headers. This parameter should only be used if the model information is missing in the input |
 | `--min_lqb_mb`| `5`|Alpaqa threshold (LQB/Mb) to trigger conditional masking of low-quality bases.|
 | `--mask_threshold`|`10`|Quality score cutoff for masking. If masking is triggered, bases with a Q-score ≤ this value are replaced with 'N'.|
  
