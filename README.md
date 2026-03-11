@@ -7,14 +7,13 @@ BOAP takes raw reads (FASTQ or BAM) and produces high-quality, circularized, and
 
 ## Pipeline overview
 
-1.  **Input**: Accepts raw `.fastq.gz` or `.bam` files generated using SUP/HAC (`v5.0` / `v5.2`) basecalling.  
-   Inclusion of the basecalling model in the read header is recommended. BAM files are automatically converted to FASTQ.
+1.  **Input**: Accepts raw `.fastq.gz` or `.bam` files generated using SUP/HAC (`v5.0` / `v5.2`) basecalling. BAM files are automatically converted to FASTQ.
 2.  **Quality Filtering (Nanoq)**: Filters reads based on minimum quality (Q10) and minimum length (1,000 bp).
 3.  **Genome Size Estimation**: Uses `Raven` to estimate genome size from a rapid preliminary assembly. Alternatively accepts  user-provided size (e.g., `5m`) to skip raven assembly.
 4.  **Downsampling (Filtlong)**: Downsamples high-quality reads to a target coverage (default 100x) based on mean quality (without additional length filtering).
 5.  **Assembly (Flye)**: Performs *de novo* assembly using Flye with the `--nano-hq` mode.
 6.  **Circularization (Dnaapler)**: Re-orients circular chromosomes and plasmids to standardized start positions.
-7.  **Polishing (Medaka2)**: Polishes the assembly using ONT's `medaka` with the `--bacteria` model for high consensus accuracy.
+7.  **Polishing (Medaka2)**: Polishes the assembly using ONT's `medaka` with the `r1041_e82_400bps_bacterial_methylation` model.
 8.  **QC & Reporting**: Calculates accuracy via `Alpaqa` and summarizes contig lengths and coverage information.
 9. **Conditional Masking**: For assemblies flagged as error-prone by `Alpaqa` (default threshold ≥5 LQB/Mbp), low-quality bases (default Q≤10) are masked with 'N' to improve downstream cgMLST analyses. These masked assemblies are saved as additional outputs alongside the polished genomes.
 
@@ -63,12 +62,6 @@ Target coverage 80x. Provide the genome size to skip the estimation step. Includ
 nextflow run /path/to/boap.nf -c /path/to/nextflow.config --input "/path/to/reads/sample_01.fastq.gz" --gsize 5.2m --coverage 80 --threads 30 --outdir boap_results -bg
 ```
 
-#### Force a specific medaka2 model
-Information on the basecalling model is usually stored in the fastq or bam files and automatically detected by medaka2. If the model information is missing in the input files, specific models can be provided via
-```
-nextflow run /path/to/boap.nf -c /path/to/nextflow.config --input "*.bam" --force-model r1041_e82_400bps_sup_v5.2.0
-```
-  
 #### Modify LQB masking parameters
 Mask bases with qscores ≤8 (default 10) in assemblies with ≥3 LQBs/Mpb (default: 5). 
 ```
@@ -86,7 +79,6 @@ nextflow run /path/to/boap.nf -c /path/to/nextflow.config --input /path/to/reads
 | `--min_contig_len` | `1000`| Minimum contig length (Flye)|
 | `--gsize`| `null`| Manual genome size (e.g., `5m`). If not set, calculated automatically via Raven|
 | `--threads`|`30`| Maximum number of threads used for parallel processes|
-| `--force_model`| `false`| (Optional) Force a specific basecalling model for polishing (e.g., `r1041_e82_400bps_sup_v5.0.0`). The pipeline automatically detects the basecalling model from the input FASTQ/BAM headers. This parameter should only be used if the model information is missing in the input |
 | `--min_lqb_mb`| `5`|Alpaqa threshold (LQB/Mb) to trigger conditional masking of low-quality bases.|
 | `--mask_threshold`|`10`|Quality score cutoff for masking. If masking is triggered, bases with a Q-score ≤ this value are replaced with 'N'.|
  
@@ -99,7 +91,7 @@ results/
 ├── assemblies/                   # Medaka2 polished assemblies
 │   ├── sampleA.fasta
 │   └── sampleB.fasta
-├── assemblies_LQB-masked/        # Assemblies flagged as error-prone by alpaqa with masked LQBs as input for cgMLST analyes
+├── assemblies_LQB-masked/        # Assemblies with masked LQBs as input for cgMLST analyes; only for assemblies flagged as error-prone by alpaqa 
 │   ├── sampleA_q[x]_masked.fasta
 │   └── sampleB_q[x]_masked.fasta
 ├── summary/                    # QC reports

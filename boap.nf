@@ -22,7 +22,6 @@ params.outdir         = "boap_output"
 params.coverage       = 100
 params.min_contig_len = 1000
 params.gsize          = null
-params.force_model    = false
 params.min_lqb_mb     = 5
 params.mask_threshold = 10
 
@@ -167,9 +166,6 @@ process MEDAKA2 {
 
     cpus 4
 
-    // define the model flag conditionally based on params.force_model
-    def model_flag = params.force_model ? "-m ${params.force_model}" : ""
-
     publishDir "${params.outdir}/assemblies", mode: "copy", pattern: "*.fasta"
 
     input:  tuple val(sampleid), path(assembly), path(reads)
@@ -178,7 +174,7 @@ process MEDAKA2 {
     script:
     
     """
-    medaka_consensus -i ${reads} -d ${assembly} -o . -t ${task.cpus} ${model_flag} -q
+    medaka_consensus -i ${reads} -d ${assembly} -o . -t ${task.cpus} -m r1041_e82_400bps_bacterial_methylation -q
     
     grep ">" ${assembly} | sed 's/^>//g' | sed 's/orig_[^ ]* //g' > original_headers_clean.txt
 
