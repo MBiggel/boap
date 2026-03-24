@@ -254,14 +254,15 @@ process ALPAQA {
 // --- 4. WORFLOW ---
 
 workflow {
-    raw_ch = Channel.fromPath(params.input)
-        .map { it -> it.isDirectory() ? file("${it}/*.{fastq.gz,bam}") : it }
-        .flatten()
-        .map { file -> tuple(file.simpleName, file) }
+    raw_ch = Channel.fromPath("${params.input}/*.{fastq.gz,bam}")
+        .map { file ->
+        def id = file.name.replaceAll(/\.(fastq\.gz|bam)$|(?<=\.fastq)\.gz$/, '')
+        return tuple(id, file)
+        }
 
     raw_ch.branch {
         bam:   it[1].name.endsWith('.bam')
-        fastq: true
+        fastq: it[1].name.endsWith('.fastq.gz')
     }.set { input_sources }
 
     BAM2FASTQ(input_sources.bam)
