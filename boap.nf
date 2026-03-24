@@ -6,7 +6,7 @@ nextflow.enable.dsl=2
  * ONT WGS ASSEMBLY PIPELINE
  * ------------------------------------------------------------------------ */
 
-def version = "1.0.0"
+def version = "1.0.1"
 
 // Display version and exit if --version is called
 if (workflow.commandLine.contains('--version')) {
